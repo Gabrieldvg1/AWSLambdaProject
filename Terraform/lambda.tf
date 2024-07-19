@@ -4,8 +4,8 @@
   handler       = "AWSLambdaProject"
   runtime       = "dotnet8"
 
-  filename         = "C:/Users/Gabri/source/repos/AWSLambdaProject/publish/publish.zip"
-  source_code_hash = filebase64sha256("C:/Users/Gabri/source/repos/AWSLambdaProject/publish/publish.zip")
+  filename         = "../publish/lambda-deployment-package.zip"
+  source_code_hash = filebase64sha256("../publish/lambda-deployment-package.zip")
 
   environment {
     variables = {

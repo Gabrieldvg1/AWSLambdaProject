@@ -1,0 +1,108 @@
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select the action to perform'
+        required: true
+        default: 'deploy'
+        options:
+          - deploy
+          - destroy
+
+jobs:
+  deploy_or_destroy:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_aws_region: "eu-west-1"
+      S3_BUCKET_NAME: "terraform-backend"
+      DYNAMODB_TABLE_NAME: "terraform-locks"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup AWS Credentials
+        run: |
+          echo "Setting up AWS credentials..."
+          mkdir -p ~/.aws
+          touch ~/.aws/credentials
+          echo "[default]" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Log selected action
+        run: echo "Selected action ${{ github.event.inputs.action }}"
+
+      - name: Create S3 Bucket and DynamoDB Table for Terraform Backend
+        run: |
+          echo "Creating S3 bucket and DynamoDB table for Terraform backend..."
+          aws s3api create-bucket --bucket ${{ env.S3_BUCKET_NAME }} --region ${{ env.TF_VAR_aws_region }} || echo "Bucket already exists"
+          aws dynamodb create-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} \
+            --attribute-definitions AttributeName=LockID,AttributeType=S \
+            --key-schema AttributeName=LockID,KeyType=HASH \
+            --billing-mode PAY_PER_REQUEST \
+            --region ${{ env.TF_VAR_aws_region }} || echo "Table already exists"
+          echo "S3 bucket and DynamoDB table setup complete."
+
+      - name: Setup .NET
+        if: ${{ github.event.inputs.action == 'deploy' }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8'
+
+      - name: Restore dependencies and build
+        if: ${{ github.event.inputs.action == 'deploy' }}
+        run: |
+          echo "Restoring dependencies and building the project..."
+          dotnet publish -c Release -o ./publish
+          echo "Project build complete."
+        working-directory: .
+
+      - name: Zip artifacts
+        if: ${{ github.event.inputs.action == 'deploy' }}
+        run: |
+          echo "Zipping artifacts..."
+          cd ./publish
+          zip -r lambda-deployment-package.zip .
+          echo "Artifacts zipped and ready for deployment."
+        working-directory: ./publish
+
+      - name: Deploy Lambda using Terraform
+        if: ${{ github.event.inputs.action == 'deploy' }}
+        run: |
+          echo "Deploying Lambda using Terraform..."
+          cd ./terraform
+          terraform init
+          terraform apply -auto-approve
+          echo "Terraform deployment complete."
+        env:
+          TF_VAR_aws_region: ${{ env.TF_VAR_aws_region }}
+
+      - name: Destroy Lambda using Terraform
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          echo "Destroying Lambda using Terraform..."
+          cd ./terraform
+          terraform init
+          terraform destroy -auto-approve
+          echo "Terraform destruction complete."
+        env:
+          TF_VAR_aws_region: ${{ env.TF_VAR_aws_region }}
+
+      - name: Delete S3 Bucket and DynamoDB Table
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          echo "Deleting S3 bucket and DynamoDB table for Terraform backend..."
+          aws s3 rb s3://${{ env.S3_BUCKET_NAME }} --force
+          aws dynamodb delete-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.TF_VAR_aws_region }}
+          echo "S3 bucket and DynamoDB table deleted."
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.TF_VAR_aws_region }}
