@@ -54,7 +54,7 @@ jobs:
         if: ${{ github.event.inputs.action == 'deploy' }}
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8'
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies and build
         if: ${{ github.event.inputs.action == 'deploy' }}
