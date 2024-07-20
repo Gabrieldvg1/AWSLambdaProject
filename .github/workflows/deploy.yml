@@ -125,7 +125,7 @@ jobs:
         if: ${{ github.event.inputs.action == 'deploy' }}
         run: |
           echo "Deploying Lambda using Terraform..."
-          cd ./terraform
+          cd ./Terraform
           terraform init
           terraform apply -auto-approve
           echo "Terraform deployment complete."
