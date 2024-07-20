@@ -4,10 +4,10 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-backend"
+    bucket         = "serverless-event-manager-terraform-backend"
     key            = "state/terraform.tfstate"
     region         = "eu-west-1"
-    dynamodb_table = "terraform-locks"
+    dynamodb_table = "serverless-event-manager-terraform-locks"
     encrypt        = true
   }
 }
