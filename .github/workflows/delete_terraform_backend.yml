@@ -41,7 +41,6 @@ jobs:
         echo "S3 bucket deletion complete."
 
     - name: Check if DynamoDB table exists
-      if: ${{ env.DYNAMODB_TABLE_EXISTS == 'false' }}
       run: |
         if aws dynamodb describe-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
             echo "DynamoDB table already exists."
@@ -52,6 +51,7 @@ jobs:
         fi
 
     - name: Delete DynamoDB table
+      if: ${{ env.DYNAMODB_TABLE_EXISTS == 'true' }}
       run: |
         echo "Deleting DynamoDB table..."
         aws dynamodb delete-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.AWS_REGION }}
