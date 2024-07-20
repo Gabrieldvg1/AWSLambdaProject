@@ -1,0 +1,58 @@
+name: Delete Terraform Backend Resources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete_backend_resources:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "eu-west-1"
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      DYNAMODB_TABLE_NAME: ${{ secrets.DYNAMODB_TABLE_NAME }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: ${{ env.AWS_REGION }}
+
+    - name: Check if S3 bucket exists
+      run: |
+        if aws s3api head-bucket --bucket ${{ env.S3_BUCKET_NAME }} 2>/dev/null; then
+            echo "S3 bucket already exists."
+            echo "S3_BUCKET_EXISTS=true" >> $GITHUB_ENV
+        else
+            echo "S3 bucket does not exist."
+            echo "S3_BUCKET_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Delete S3 bucket
+      if: ${{ env.S3_BUCKET_EXISTS == 'true' }}
+      run: |
+        echo "Deleting S3 bucket..."
+        aws s3 rb s3://${{ env.S3_BUCKET_NAME }} --force
+        echo "S3 bucket deletion complete."
+
+    - name: Check if DynamoDB table exists
+      if: ${{ env.DYNAMODB_TABLE_EXISTS == 'false' }}
+      run: |
+        if aws dynamodb describe-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "DynamoDB table already exists."
+            echo "DYNAMODB_TABLE_EXISTS=true" >> $GITHUB_ENV
+        else
+            echo "DynamoDB table does not exist."
+            echo "DYNAMODB_TABLE_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Delete DynamoDB table
+      run: |
+        echo "Deleting DynamoDB table..."
+        aws dynamodb delete-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.AWS_REGION }}
+        echo "DynamoDB table deletion complete."
