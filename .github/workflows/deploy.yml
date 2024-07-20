@@ -44,7 +44,7 @@ jobs:
             echo "Creating S3 bucket and DynamoDB table for Terraform backend..."
     
             # Create S3 bucket
-            aws s3api create-bucket --bucket ${{ env.S3_BUCKET_NAME }} --region ${{ env.TF_VAR_aws_region }} || {
+            aws s3api create-bucket --bucket ${{ env.S3_BUCKET_NAME }} --region ${{ env.TF_VAR_aws_region }} --create-bucket-configuration LocationConstraint=${{ env.TF_VAR_aws_region }} || {
             if aws s3api head-bucket --bucket ${{ env.S3_BUCKET_NAME }} 2>/dev/null; then
                 echo "Bucket already exists"
               else
