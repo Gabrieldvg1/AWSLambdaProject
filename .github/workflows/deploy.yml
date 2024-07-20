@@ -77,7 +77,7 @@ jobs:
         if: ${{ github.event.inputs.action == 'deploy' }}
         run: |
             echo "Restoring dependencies and building the project..."
-            dotnet publish AWSLambdaProject/AWSLambdaProject.csproj -c Release -o ./publish
+            dotnet publish AWSLambdaProject.csproj -c Release -o ./publish
             if [ -d "./publish" ]; then
                 echo "Project build complete and output directory exists."
             else
