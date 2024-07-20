@@ -127,7 +127,10 @@ jobs:
           echo "Deploying Lambda using Terraform..."
           cd ./Terraform
           terraform init
-          terraform apply -auto-approve
+ 
+          # Calculate the hash of the deployment package
+          HASH=$(base64 -w 0 ../publish/lambda-deployment-package.zip | sha256sum | awk '{print $1}')
+          terraform apply -var "lambda_source_code_hash=$HASH" -auto-approve
           echo "Terraform deployment complete."
 
       - name: Destroy Lambda using Terraform

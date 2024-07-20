@@ -10,12 +10,4 @@ terraform {
     dynamodb_table = "serverless-event-manager-terraform-locks"
     encrypt        = true
   }
-}
-
-
-
-
-
-
-
-    
+}    

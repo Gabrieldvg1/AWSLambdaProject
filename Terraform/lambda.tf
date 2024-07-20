@@ -1,16 +1,17 @@
-﻿resource "aws_lambda_function" "my_lambda" {
+﻿variable "lambda_source_code_hash" {
+  description = "Base64-encoded SHA-256 hash of the Lambda deployment package"
+  type        = string
+  default     = ""
+}
+
+resource "aws_lambda_function" "my_lambda" {
   function_name = "MyLambdaFunction"
   role          = aws_iam_role.lambda_role.arn
   handler       = "AWSLambdaProject"
   runtime       = "dotnet8"
 
   filename         = "../publish/lambda-deployment-package.zip"
-  source_code_hash = filebase64sha256("../publish/lambda-deployment-package.zip")
-
-  environment {
-    variables = {
-      ENV_VAR = "value" # Add your environment variables here
-    }
+  source_code_hash = var.lambda_source_code_hash != "" ? var.lambda_source_code_hash : null
   }
 
   tags = {
