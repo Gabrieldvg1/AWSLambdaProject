@@ -134,7 +134,7 @@ jobs:
         if: ${{ github.event.inputs.action == 'destroy' }}
         run: |
           echo "Destroying Lambda using Terraform..."
-          cd ./terraform
+          cd ./Terraform
           terraform init
           terraform destroy -auto-approve
           echo "Terraform destruction complete."
