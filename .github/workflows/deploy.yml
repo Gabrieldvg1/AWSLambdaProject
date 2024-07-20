@@ -61,7 +61,7 @@ jobs:
 
       - name: Check if DynamoDB table exists
         run: |
-            if aws dynamodb describe-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} 2>/dev/null; then
+            if aws dynamodb describe-table --table-name ${{ env.DYNAMODB_TABLE_NAME }} --region ${{ env.TF_VAR_aws_region }} 2>/dev/null; then
               echo "DynamoDB table already exists."
               echo "DYNAMODB_TABLE_EXISTS=true" >> $GITHUB_ENV
             else
