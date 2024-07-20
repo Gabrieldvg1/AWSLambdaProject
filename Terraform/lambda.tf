@@ -12,7 +12,6 @@ resource "aws_lambda_function" "my_lambda" {
 
   filename         = "../publish/lambda-deployment-package.zip"
   source_code_hash = var.lambda_source_code_hash != "" ? var.lambda_source_code_hash : null
-  }
 
   environment {
     variables = {
