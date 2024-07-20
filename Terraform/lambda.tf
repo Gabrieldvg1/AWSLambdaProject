@@ -14,6 +14,12 @@ resource "aws_lambda_function" "my_lambda" {
   source_code_hash = var.lambda_source_code_hash != "" ? var.lambda_source_code_hash : null
   }
 
+  environment {
+    variables = {
+      ENV_VAR = "value" # Add your environment variables here
+    }
+  }
+
   tags = {
     Name = "MyLambdaFunction"
   }
